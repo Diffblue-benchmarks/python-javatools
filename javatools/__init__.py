@@ -89,9 +89,9 @@ CONST_Methodref = 10
 CONST_InterfaceMethodref = 11
 CONST_NameAndType = 12
 CONST_ModuleId = 13  # Removed? Maybe OpenJDK only?
-CONST_MethodHandle = 15  # TODO
-CONST_MethodType = 16  # TODO
-CONST_InvokeDynamic = 18  # TODO
+CONST_MethodHandle = 15
+CONST_MethodType = 16
+CONST_InvokeDynamic = 18
 
 
 # class and member flags
@@ -243,6 +243,16 @@ class JavaConstantPool(object):
                    CONST_InterfaceMethodref, CONST_NameAndType,
                    CONST_ModuleId):
             return tuple(self.deref_const(i) for i in v)
+
+        elif t == CONST_MethodHandle:
+            return (v[0], self.dref_const(v[1]))
+
+        elif t == CONST_MethodType:
+            return self.deref_const(v[0])
+
+        elif t == CONST_InvokeDynamic:
+            #TODO: v[0] is an index to an element in the bootstrap_methods array of the bootstrap method table
+            return self.deref_const(v[1])
 
         else:
             raise Unimplemented("Unknown constant pool type %r" % t)
@@ -2180,11 +2190,11 @@ def _next_argsig(s):
 
     elif c == "[":
         d, s = _next_argsig(s[1:])
-        result = (c + d, s[len(d) + 1:])
+        result = ("[" + d, s)
 
     elif c == "L":
         i = s.find(';') + 1
-        result = (s[:i], s[i + 1:])
+        result = (s[:i], s[i:])
 
     elif c == "(":
         i = s.find(')') + 1
